@@ -1,0 +1,11 @@
+
+*make
+*.zip
+*.json
+*.npy
+*log*
+*.pth
+*.pkl
+*log*
+*.txt
+
