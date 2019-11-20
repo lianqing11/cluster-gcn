@@ -164,10 +164,12 @@ def main(args):
             if j % args.log_every == 0:
                 print(f"epoch:{epoch}/{args.n_epochs}, Iteration {j}/"
                       f"{len(cluster_iterator)}:training loss", loss.item())
+                logger.info("epoch: %f, training loss: %f", epoch, loss.item())
                 writer.add_scalar('train/loss', loss.item(),
                                   global_step=j + epoch * len(cluster_iterator))
         print("current memory:",
               torch.cuda.memory_allocated(device=pred.device) / 1024 / 1024)
+        logger.info("current memory", torch.cuda.memory_allocated(device=pred.device) / 1024 / 1024)
 
         # evaluate
         if epoch % args.val_every == 0:
@@ -175,9 +177,11 @@ def main(args):
                 model, g, labels, val_mask, multitask)
             print(
                 "Val F1-mic{:.4f}, Val F1-mac{:.4f}". format(val_f1_mic, val_f1_mac))
+            logger.info("Val F1-mic: %f, Val F1-mac: %f", val_f1_mic, val_f1_mac)
             if val_f1_mic > best_f1:
                 best_f1 = val_f1_mic
                 print('new best val f1:', best_f1)
+                logger.info("new best val f1", best_f1)
                 torch.save(model.state_dict(), os.path.join(
                     log_dir, 'best_model.pkl'))
             writer.add_scalar('val/f1-mic', val_f1_mic, global_step=epoch)
@@ -185,7 +189,7 @@ def main(args):
 
     end_time = time.time()
     print(f'training using time {start_time-end_time}')
-
+    logger.info("training using time: %f", (start_time-end_time))
     # test
     if args.use_val:
         model.load_state_dict(torch.load(os.path.join(
@@ -193,6 +197,7 @@ def main(args):
     test_f1_mic, test_f1_mac = evaluate(
         model, g, labels, test_mask, multitask)
     print("Test F1-mic{:.4f}, Test F1-mac{:.4f}". format(test_f1_mic, test_f1_mac))
+    logger.info("Test F1-mic: %f, Test F1-mac: %f", test_f1_mic, test_f1_mac)
     writer.add_scalar('test/f1-mic', test_f1_mic)
     writer.add_scalar('test/f1-mac', test_f1_mac)
 
