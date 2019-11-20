@@ -111,7 +111,8 @@ def main(args):
                       args.n_layers,
                       F.relu,
                       args.dropout,
-                      args.use_pp)
+                      args.use_pp,
+                      args.aggregator_type)
 
     if cuda:
         model.cuda()
@@ -234,6 +235,8 @@ if __name__ == '__main__':
                         help="Weight for L2 loss")
     parser.add_argument("--note", type=str, default='none',
                         help="note for log dir")
+    parser.add_argument("--aggregator_type", type=str, default="gcn",
+                        help="Aggregator type: mean/gcn/pool/lstm/attention")
 
     args = parser.parse_args()
 
