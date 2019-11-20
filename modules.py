@@ -91,6 +91,7 @@ class GraphSAGELayer(nn.Module):
                 # degs = degs.to(feat.device)
                 # h_neigh = (graph.ndata['neigh'] + graph.ndata['h']) / (degs.unsqueeze(-1) + 1)
                 ah = g.ndata.pop('h')
+                ah = ah * norm
             elif self._aggre_type == 'pool':
                 g.ndata['h'] = F.relu(self.fc_pool(h))
                 g.update_all(fn.copy_src('h', 'm'), fn.max('m', 'h'))
@@ -113,15 +114,12 @@ class GraphSAGELayer(nn.Module):
             h = self.dropout(h)
 
         #h = self.linear(h)
-
-
         h = self.lynorm(h)
         if self.activation:
             h = self.activation(h)
         return h
 
     def concat(self, h, ah, norm):
-        ah = ah * norm
         h = torch.cat((h, ah), dim=1)
         return h
 
