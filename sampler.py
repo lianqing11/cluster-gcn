@@ -32,6 +32,7 @@ class ClusterIter(object):
         self.use_pp = use_pp
         self.g = g.subgraph(seed_nid)
         self.g.copy_from_parent()
+        self._in_feats = in_feats
         if aggregator_type == 'pool':
             self.fc_pool = nn.Linear(in_feats, in_feats)
         if aggregator_type == 'lstm':
