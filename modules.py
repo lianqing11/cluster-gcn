@@ -29,15 +29,14 @@ class GraphSAGELayer(nn.Module):
         self._aggre_type = aggregator_type
         # aggregator type: mean/pool/lstm/gcn/attention
         self.leaky_relu = nn.LeakyReLU(0.2)
-        if self.use_pp is True:
-            if aggregator_type == 'pool':
-                self.fc_pool = nn.Linear(in_feats, in_feats)
-            elif aggregator_type == 'lstm':
-                self.lstm = nn.LSTM(in_feats, in_feats, batch_first=True)
-            elif aggregator_type == 'attn':
-                self.fc_attn = nn.Linear(in_feats, in_feats*self.num_heads)
-                self.attn_l = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
-                self.attn_r = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
+        if aggregator_type == 'pool':
+            self.fc_pool = nn.Linear(in_feats, in_feats)
+        elif aggregator_type == 'lstm':
+            self.lstm = nn.LSTM(in_feats, in_feats, batch_first=True)
+        elif aggregator_type == 'attn':
+            self.fc_attn = nn.Linear(in_feats, in_feats*self.num_heads)
+            self.attn_l = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
+            self.attn_r = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
 
 
 
@@ -58,11 +57,10 @@ class GraphSAGELayer(nn.Module):
         #     self.linear.bias.data.uniform_(-stdv, stdv)
         """Reinitialize learnable parameters."""
         gain = nn.init.calculate_gain('relu')
-        if self.use_pp is True:
-            if self._aggre_type == 'pool':
-                nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
-            if self._aggre_type == 'lstm':
-                self.lstm.reset_parameters()
+        if self._aggre_type == 'pool':
+            nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
+        if self._aggre_type == 'lstm':
+            self.lstm.reset_parameters()
 
 
     def _lstm_reducer(self, nodes):
