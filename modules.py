@@ -102,18 +102,16 @@ class GraphSAGELayer(nn.Module):
                 ah = g.ndata['h']
             else:
                 raise KeyError('Aggregator type {} not recognized.'.format(self._aggre_type))
-            # GraphSAGE GCN does not require fc_self.
-            # if self._aggre_type == 'gcn':
-            #     rst = self.fc_neigh(ah)
-            # else:
-            #     rst = self.fc_self(h) + self.fc_neigh(ah)
 
             h = self.concat(h, ah, norm)
-
         if self.dropout:
             h = self.dropout(h)
-
-        #h = self.linear(h)
+        # GraphSAGE GCN does not require fc_self.
+        # if self._aggre_type == 'gcn':
+        #     rst = self.fc_neigh(ah)
+        # else:
+        #     rst = self.fc_self(h) + self.fc_neigh(ah)
+        h = self.linear(h)
         h = self.lynorm(h)
         if self.activation:
             h = self.activation(h)
