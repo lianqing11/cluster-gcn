@@ -1,9 +1,11 @@
 import math
+from dgl.nn.pytorch import edge_softmax
 
 import dgl.function as fn
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import torch as th
 
 class GraphSAGELayer(nn.Module):
     def __init__(self,
@@ -12,6 +14,7 @@ class GraphSAGELayer(nn.Module):
                  aggregator_type,
                  activation,
                  dropout,
+                 num_heads=1,
                  bias=True,
                  use_pp=False,
                  use_lynorm=True):
@@ -20,17 +23,23 @@ class GraphSAGELayer(nn.Module):
         # features with the new features.
         self._in_feats = in_feats
         self.linear = nn.Linear(2 * in_feats, out_feats, bias=bias)
+        self.num_heads = num_heads,
         self.activation = activation
         self.use_pp = use_pp
         self._aggre_type = aggregator_type
         # aggregator type: mean/pool/lstm/gcn/attention
-        if aggregator_type == 'pool':
-            self.fc_pool = nn.Linear(in_feats, in_feats)
-        if aggregator_type == 'lstm':
-            self.lstm = nn.LSTM(in_feats, in_feats, batch_first=True)
-        if aggregator_type != 'gcn':
-            self.fc_self = nn.Linear(in_feats, out_feats, bias=bias)
-        self.fc_neigh = nn.Linear(in_feats, out_feats, bias=bias)
+        self.leaky_relu = nn.LeakyReLU(0.2)
+        if self.use_pp is True:
+            if aggregator_type == 'pool':
+                self.fc_pool = nn.Linear(in_feats, in_feats)
+            elif aggregator_type == 'lstm':
+                self.lstm = nn.LSTM(in_feats, in_feats, batch_first=True)
+            elif aggregator_type == 'attn':
+                self.fc_attn = nn.Linear(in_feats, in_feats*self.num_heads)
+                self.attn_l = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
+                self.attn_r = nn.Parameter(th.FloatTensor(size=(1, num_heads, in_feats)))
+
+
 
         if dropout:
             self.dropout = nn.Dropout(p=dropout)
@@ -49,13 +58,11 @@ class GraphSAGELayer(nn.Module):
         #     self.linear.bias.data.uniform_(-stdv, stdv)
         """Reinitialize learnable parameters."""
         gain = nn.init.calculate_gain('relu')
-        if self._aggre_type == 'pool':
-            nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
-        if self._aggre_type == 'lstm':
-            self.lstm.reset_parameters()
-        if self._aggre_type != 'gcn':
-            nn.init.xavier_uniform_(self.fc_self.weight, gain=gain)
-        nn.init.xavier_uniform_(self.fc_neigh.weight, gain=gain)
+        if self.use_pp is True:
+            if self._aggre_type == 'pool':
+                nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
+            if self._aggre_type == 'lstm':
+                self.lstm.reset_parameters()
 
 
     def _lstm_reducer(self, nodes):
@@ -101,6 +108,18 @@ class GraphSAGELayer(nn.Module):
                 g.ndata['h'] = h
                 g.update_all(fn.copy_src('h', 'm'), self._lstm_reducer)
                 ah = g.ndata['h']
+            elif self._aggre_type == 'attn':
+                feat = self.fc(h).view(-1, self.num_heads, self.in_feats)
+                el = (feat * self.attn_l).sum(dim=-1).unsqueeze(-1)
+                er = (feat * self.attn_r).sum(dim=-1).unsqueeze(-1)
+                g.ndata.update({'ft': feat, 'el': el, 'er': er})
+                g.apply_edges(fn.u_add_v('el', 'er', 'e'))
+                e = self.leaky_relu(g.edata.pop('e'))
+                g.edata['a'] = edge_softmax(g, e)
+                g.update_all(fn.u_mul_e('ft', 'a', 'm'),
+                             fn.sum('m', 'ft'))
+                ah = g.ndata['ft']
+
             else:
                 raise KeyError('Aggregator type {} not recognized.'.format(self._aggre_type))
 
