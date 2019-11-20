@@ -11,7 +11,7 @@ class ClusterIter(object):
     '''The partition sampler given a DGLGraph and partition number.
     The metis is used as the graph partition backend.
     '''
-    def __init__(self, dn, g, psize, batch_size, seed_nid, aggregator_type, in_feats, out_feats, use_pp=True):
+    def __init__(self, dn, g, psize, batch_size, seed_nid, aggregator_type, in_feats, out_feats, cuda, gpu, use_pp=True):
         """Initialize the sampler.
 
         Paramters
@@ -29,14 +29,19 @@ class ClusterIter(object):
         use_pp: bool
             Whether to use precompute of AX
         """
+        
         self.use_pp = use_pp
         self.g = g.subgraph(seed_nid)
         self.g.copy_from_parent()
         self._in_feats = in_feats
         if aggregator_type == 'pool':
             self.fc_pool = nn.Linear(in_feats, in_feats)
+            if cuda:
+                self.fc_pool = self.fc_pool.cuda()
         if aggregator_type == 'lstm':
             self.lstm = nn.LSTM(in_feats, in_feats, batch_first=True)
+            if cuda:
+                self.lstm = self.lstm.cuda()
         self._aggre_type = aggregator_type
         # precalc the aggregated features from training graph only
         if use_pp:

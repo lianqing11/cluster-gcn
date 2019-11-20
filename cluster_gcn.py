@@ -101,7 +101,7 @@ def main(args):
     print('labels shape:', labels.shape)
 
     cluster_iterator = ClusterIter(
-        args.dataset, g, args.psize, args.batch_size, train_nid, args.aggregator_type, in_feats, args.n_hidden, use_pp=args.use_pp)
+        args.dataset, g, args.psize, args.batch_size, train_nid, args.aggregator_type, in_feats, args.n_hidden, cuda, args.gpu, use_pp=args.use_pp)
 
     print("features shape, ", features.shape)
 

@@ -18,6 +18,7 @@ class GraphSAGELayer(nn.Module):
         super(GraphSAGELayer, self).__init__()
         # The input feature size gets doubled as we concatenated the original
         # features with the new features.
+        self._in_feats = in_feats
         self.linear = nn.Linear(2 * in_feats, out_feats, bias=bias)
         self.activation = activation
         self.use_pp = use_pp
