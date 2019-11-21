@@ -23,7 +23,7 @@ class GraphSAGELayer(nn.Module):
         # features with the new features.
         self._in_feats = in_feats
         self.linear = nn.Linear(2 * in_feats, out_feats, bias=bias)
-        self.num_heads = num_heads,
+        self.num_heads = num_heads
         self.activation = activation
         self.use_pp = use_pp
         if use_pp:
@@ -64,6 +64,12 @@ class GraphSAGELayer(nn.Module):
             nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
         if self._aggre_type == 'lstm':
             self.lstm.reset_parameters()
+        elif self._aggre_type == 'attn':
+            gain = nn.init.calculate_gain('relu')
+            nn.init.xavier_uniform_(self.fc_attn.weight, gain=gain)
+            nn.init.xavier_uniform_(self.attn_l, gain=gain)
+            nn.init.xavier_uniform_(self.attn_r, gain=gain)
+
 
 
     def _lstm_reducer(self, nodes):
@@ -110,7 +116,7 @@ class GraphSAGELayer(nn.Module):
                 g.update_all(fn.copy_src('h', 'm'), self._lstm_reducer)
                 ah = g.ndata['h']
             elif self._aggre_type == 'attn':
-                feat = self.fc(h).view(-1, self.num_heads, self.in_feats)
+                feat = self.fc_attn(h).view(-1, self.num_heads, self._in_feats)
                 el = (feat * self.attn_l).sum(dim=-1).unsqueeze(-1)
                 er = (feat * self.attn_r).sum(dim=-1).unsqueeze(-1)
                 g.ndata.update({'ft': feat, 'el': el, 'er': er})
@@ -120,7 +126,7 @@ class GraphSAGELayer(nn.Module):
                 g.update_all(fn.u_mul_e('ft', 'a', 'm'),
                              fn.sum('m', 'ft'))
                 ah = g.ndata['ft']
-
+                ah = ah.squeeze(1)
             else:
                 raise KeyError('Aggregator type {} not recognized.'.format(self._aggre_type))
 
