@@ -14,7 +14,7 @@ from dgl.data import register_data_args
 from torch.utils.tensorboard import SummaryWriter
 
 from modules import GraphSAGE
-from sampler import ClusterIter
+from sampler_insert import ClusterIter
 from utils import Logger, evaluate, save_log_dir, load_data
 
 
@@ -100,8 +100,6 @@ def main(args):
     g.ndata['train_mask'] = train_mask
     print('labels shape:', labels.shape)
 
-    cluster_iterator = ClusterIter(
-        args.dataset, g, args.psize, args.batch_size, train_nid, args.aggregator_type, in_feats, args.n_hidden, cuda, use_pp=args.use_pp)
 
     print("features shape, ", features.shape)
 
@@ -117,6 +115,8 @@ def main(args):
     if cuda:
         model.cuda()
 
+    cluster_iterator = ClusterIter(
+        args.dataset, g, args.psize, args.batch_size, train_nid, in_feats, args.n_hidden, use_pp=args.use_pp)
     # logger and so on
     log_dir = save_log_dir(args)
     writer = SummaryWriter(log_dir)
@@ -144,11 +144,12 @@ def main(args):
     start_time = time.time()
     best_f1 = -1
 
+    model.train()
     for epoch in range(args.n_epochs):
         for j, cluster in enumerate(cluster_iterator):
+            model.train()
             # sync with upper level training graph
             cluster.copy_from_parent()
-            model.train()
             # forward
             pred = model(cluster)
             batch_labels = cluster.ndata['labels']

@@ -26,7 +26,10 @@ class GraphSAGELayer(nn.Module):
         self.num_heads = num_heads,
         self.activation = activation
         self.use_pp = use_pp
+        if use_pp:
+            aggregator_type='gcn'
         self._aggre_type = aggregator_type
+
         # aggregator type: mean/pool/lstm/gcn/attention
         self.leaky_relu = nn.LeakyReLU(0.2)
         if aggregator_type == 'pool':
