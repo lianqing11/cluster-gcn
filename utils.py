@@ -23,7 +23,7 @@ class Logger(object):
     def write(self, s):
         with open(self.path, 'a') as f:
             f.write(str(s))
-        print(s)
+        #print(s)
         return
 
 def arg_list(labels):

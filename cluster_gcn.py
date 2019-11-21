@@ -14,7 +14,7 @@ from dgl.data import register_data_args
 from torch.utils.tensorboard import SummaryWriter
 
 from modules import GraphSAGE
-from sampler_insert import ClusterIter
+from sampler import ClusterIter
 from utils import Logger, evaluate, save_log_dir, load_data
 
 
@@ -178,7 +178,7 @@ def main(args):
                 model, g, labels, val_mask, multitask)
             print(
                 "Val F1-mic{:.4f}, Val F1-mac{:.4f}". format(val_f1_mic, val_f1_mac))
-            logger.write("Val F1-mic: " + str(val_f1_mic) + "Val F1-mac: %f" + str(val_f1_mac)+ "\n")
+            logger.write("Val F1-mic: " + str(val_f1_mic) + "Val F1-mac: " + str(val_f1_mac)+ "\n")
             if val_f1_mic > best_f1:
                 best_f1 = val_f1_mic
                 print('new best val f1:', best_f1)
