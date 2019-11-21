@@ -62,11 +62,12 @@ class ClusterIter(object):
         g.ndata['norm'] = norm
         features = g.ndata['features']
         print("features shape, ", features.shape)
-        g.update_all(fn.copy_src(src='features', out='m'),
-                        fn.sum(msg='m', out='features'),
-                        None)
-        pre_feats = g.ndata['features'] * norm
-        g.ndata['features'] = torch.cat([features, pre_feats], dim=1)
+        with torch.no_grad():
+            g.update_all(fn.copy_src(src='features', out='m'),
+                            fn.sum(msg='m', out='features'),
+                            None)
+            pre_feats = g.ndata['features'] * norm
+            g.ndata['features'] = torch.cat([features, pre_feats], dim=1)
 
     # use one side normalization
     def get_norm(self, g):
