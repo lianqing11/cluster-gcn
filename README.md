@@ -37,17 +37,33 @@ quick test to see whether you install metis correctly:
 
 
 ### Run experiments
-For ppi dataset
+For ppi dataset with gcn, mean, pooling aggregator:
 ```
 sh auto_gcn_mean_pool_run_ppi.sh
+```
+For ppi dataset with lstm aggregator:
+```
+sh auto_lstm_run_ppi.sh
+```
+
+For ppi dataset with attention aggregator:
+```
 sh auto_attn_run_ppi.sh 
 ```
 
-For reddit dataset
+
+For reddit dataset with gcn, mean, pooling aggregator:
 ```
 sh auto_gcn_mean_pool_run_reddit.sh
+```
+
+
+For reddit dataset with attention aggregator:
+```
 sh auto_attn_run_reddit.sh 
 ```
+
+You can get tune the hyper-param in the script and get the result from the "log" folder.
 
 ### Acknowledgements
 This code is heavily borrowed from [DGL's implementation](https://github.com/dmlc/dgl/tree/master/examples/pytorch/cluster_gcn)
