@@ -51,6 +51,7 @@ For ppi dataset with attention aggregator:
 sh auto_attn_run_ppi.sh 
 ```
 
+-------------------
 
 For reddit dataset with gcn, mean, pooling aggregator:
 ```
